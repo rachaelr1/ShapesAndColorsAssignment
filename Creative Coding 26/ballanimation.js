@@ -31,10 +31,10 @@ function draw (){
 	// ellipse(xPos, yPos, ballDiameter, ballDiameter)
 
 	//moving ball
-	if(mouseIsPressed){
+	
 	xPos = xPos + xSpeed* 1
 	yPos = yPos + ySpeed* 1
-}
+
 	if(xPos >= windowWidth - ballDiameter/2 || xPos <= ballDiameter){
 		//reverse x speed
 		xSpeed = xSpeed* -1

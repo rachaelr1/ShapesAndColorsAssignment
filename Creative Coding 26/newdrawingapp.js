@@ -41,7 +41,7 @@ function lineBrush(){
 
 
 function ellipseBrush(){
-	//background(255, 255, 255)
+	//ebackground(255, 255, 255)
 	if(mouseIsPressed){
 		fill(random(255), random(255), random(255))
 		ellipse(mouseX, mouseY, 20, 20)
