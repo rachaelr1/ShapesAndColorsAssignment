@@ -1,0 +1,25 @@
+@font-face {
+  font-family: airstrike;
+  src: url(airstrike.ttf);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+canvas {
+  display: block;
+}
+
+button {
+  font-family: airstrike;
+  background-color: mediumpurple;
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 18px;
+  cursor: pointer;
+}

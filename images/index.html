@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<!-- saved from url=(0032)http://127.0.0.1:5500/index.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script src="./index_files/p5.js"></script>
+    <script src="./index_files/p5.sound.min.js"></script>
+    
+    <script src="./index_files/clmtrackr.min.js"></script>
+    
+    <link rel="stylesheet" type="text/css" href="./index_files/style.css">
+    
+
+  <style>
+@font-face {
+font-family: airstrike;
+src: url(airstrike.ttf);
+}
+</style></head>
+  <body>
+    <main>
+    <canvas id="defaultCanvas0" class="p5Canvas" style="width: 787px; height: 429px; position: absolute; left: 0px; top: 0px; z-index: -1;" width="1574" height="858"></canvas></main>
+    <script src="./index_files/spacegame.js"></script>
+  <!-- WebSocket Live Reload Script -->
+<script>
+    // <![CDATA[  <-- For SVG support
+    if ('WebSocket' in window) {
+        (function() {
+            const protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+            const address = protocol + window.location.host + '/ws';
+            let socket;
+            let reconnectAttempts = 0;
+            const maxReconnectAttempts = 5;
+            const reconnectDelay = 1000;
+
+            function refreshCSS() {
+                const sheets = [].slice.call(document.getElementsByTagName("link"));
+                const head = document.getElementsByTagName("head")[0];
+                sheets.forEach(function(elem) {
+                    const parent = elem.parentElement || head;
+                    const rel = elem.rel;
+                    if (elem.href && (typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet")) {
+                        const url = elem.href.replace(/(&|\\?)_cacheOverride=\\d+/, '');
+                        elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+                    }
+                });
+            }
+
+            const bodyDataset = document.body && document.body.dataset ? document.body.dataset : {};
+            const isMarkdownPreview = !!(bodyDataset && bodyDataset.lspMarkdownPreview === 'true');
+            const scrollMode = (bodyDataset && bodyDataset.lspScrollMode) ? bodyDataset.lspScrollMode.toLowerCase() : 'off';
+            let pendingScrollTimeout = null;
+            let suppressOutgoing = false;
+            let lastSentScroll = 0;
+            const SCROLL_SEND_INTERVAL = 80;
+            const scrollStorageKey = 'lsp-scroll:' + window.location.pathname + window.location.search;
+
+            function getScrollingElement() {
+                return document.scrollingElement || document.documentElement || document.body;
+            }
+
+            function saveScrollPosition() {
+                if (isMarkdownPreview) {
+                    return;
+                }
+
+                try {
+                    const scrollingElement = getScrollingElement();
+                    if (!scrollingElement || !window.sessionStorage) {
+                        return;
+                    }
+
+                    const maxScroll = Math.max(0, scrollingElement.scrollHeight - window.innerHeight);
+                    const ratio = maxScroll > 0 ? scrollingElement.scrollTop / maxScroll : 0;
+                    const payload = {
+                        x: window.scrollX || 0,
+                        y: scrollingElement.scrollTop || 0,
+                        ratio: Math.max(0, Math.min(1, ratio))
+                    };
+                    window.sessionStorage.setItem(scrollStorageKey, JSON.stringify(payload));
+                } catch (err) {
+                    // Ignore storage errors; reload should still proceed.
+                }
+            }
+
+            function restoreScrollPosition() {
+                if (isMarkdownPreview) {
+                    return;
+                }
+
+                try {
+                    if (!window.sessionStorage) {
+                        return;
+                    }
+
+                    const raw = window.sessionStorage.getItem(scrollStorageKey);
+                    if (!raw) {
+                        return;
+                    }
+                    window.sessionStorage.removeItem(scrollStorageKey);
+
+                    const payload = JSON.parse(raw);
+                    setTimeout(function() {
+                        const scrollingElement = getScrollingElement();
+                        if (!scrollingElement) {
+                            return;
+                        }
+
+                        const maxScroll = Math.max(0, scrollingElement.scrollHeight - window.innerHeight);
+                        const top = typeof payload.ratio === 'number'
+                            ? maxScroll * Math.max(0, Math.min(1, payload.ratio))
+                            : (payload.y || 0);
+
+                        if (typeof window.scrollTo === 'function') {
+                            window.scrollTo({ left: payload.x || 0, top: top, behavior: 'auto' });
+                        } else {
+                            scrollingElement.scrollTop = top;
+                        }
+                    }, 0);
+                } catch (err) {
+                    // Ignore malformed storage data.
+                }
+            }
+
+            function applyScrollSync(ratio) {
+                if (!isMarkdownPreview || scrollMode === 'off') {
+                    return;
+                }
+
+                const clamped = Math.max(0, Math.min(1, ratio));
+                const scrollingElement = document.scrollingElement || document.documentElement || document.body;
+                if (!scrollingElement) {
+                    return;
+                }
+
+                const maxScroll = Math.max(0, scrollingElement.scrollHeight - window.innerHeight);
+                const target = maxScroll * clamped;
+
+                suppressOutgoing = true;
+
+                if (typeof window.scrollTo === 'function') {
+                    window.scrollTo({ top: target, behavior: 'auto' });
+                } else {
+                    scrollingElement.scrollTop = target;
+                }
+
+                setTimeout(function() {
+                    suppressOutgoing = false;
+                }, 120);
+            }
+
+            function handleCustomMessage(raw) {
+                if (!raw || scrollMode === 'off') {
+                    return;
+                }
+
+                let payload;
+                try {
+                    payload = JSON.parse(raw);
+                } catch (err) {
+                    return;
+                }
+
+                if (!payload || payload.type !== 'markdown-scroll') {
+                    return;
+                }
+
+                if (payload.source && payload.source !== 'editor') {
+                    return;
+                }
+
+                if (payload.path) {
+                    const normalize = (value) => {
+                        if (!value) {
+                            return '/';
+                        }
+                        let normalized = value;
+                        if (!normalized.startsWith('/')) {
+                            normalized = '/' + normalized;
+                        }
+                        if (normalized.length > 1 && normalized.endsWith('/')) {
+                            normalized = normalized.slice(0, -1);
+                        }
+                        return normalized;
+                    };
+
+                    if (normalize(window.location.pathname) !== normalize(payload.path)) {
+                        return;
+                    }
+                }
+
+                const ratio = typeof payload.ratio === 'number' ? payload.ratio : 0;
+                if (pendingScrollTimeout) {
+                    clearTimeout(pendingScrollTimeout);
+                }
+
+                pendingScrollTimeout = setTimeout(function() {
+                    applyScrollSync(ratio);
+                }, 16);
+            }
+
+            function sendScrollUpdate(ratio) {
+                if (!isMarkdownPreview || scrollMode !== 'sync' || !socket || socket.readyState !== WebSocket.OPEN) {
+                    return;
+                }
+                const now = Date.now();
+                if (now - lastSentScroll < SCROLL_SEND_INTERVAL) {
+                    return;
+                }
+                lastSentScroll = now;
+
+                const payload = {
+                    type: 'markdown-scroll',
+                    path: window.location.pathname || '/',
+                    ratio: ratio,
+                    source: 'preview'
+                };
+
+                try {
+                    socket.send(JSON.stringify(payload));
+                } catch (err) {
+                    console.error('Failed to send scroll sync message', err);
+                }
+            }
+
+            function connect() {
+                if (socket) {
+                    socket.close();
+                }
+
+                socket = new WebSocket(address);
+                
+                socket.onmessage = function(msg) {
+                    if (msg.data === 'reload') {
+                        console.log('Full page reload');
+                        saveScrollPosition();
+                        window.location.reload();
+                    } else if (msg.data === 'refreshcss') {
+                        console.log('CSS refresh');
+                        refreshCSS();
+                    } else {
+                        handleCustomMessage(msg.data);
+                    }
+                };
+
+                socket.onopen = function() {
+                    console.log('Live reload enabled.');
+                    reconnectAttempts = 0;
+                };
+
+                socket.onclose = function(e) {
+                    console.log('Live reload disabled.');
+                    if (reconnectAttempts < maxReconnectAttempts) {
+                        reconnectAttempts++;
+                        console.log(`Reconnecting... Attempt ${reconnectAttempts}`);
+                        setTimeout(connect, reconnectDelay);
+                    }
+                };
+
+                socket.onerror = function(err) {
+                    console.error('WebSocket error:', err);
+                    socket.close();
+                };
+            }
+
+            connect();
+            restoreScrollPosition();
+
+            if (isMarkdownPreview && scrollMode === 'sync') {
+                window.addEventListener('scroll', function() {
+                    if (suppressOutgoing) {
+                        return;
+                    }
+
+                    const scrollingElement = document.scrollingElement || document.documentElement || document.body;
+                    if (!scrollingElement) {
+                        return;
+                    }
+
+                    const maxScroll = Math.max(0, scrollingElement.scrollHeight - window.innerHeight);
+                    const ratio = maxScroll > 0 ? scrollingElement.scrollTop / maxScroll : 0;
+                    sendScrollUpdate(Math.max(0, Math.min(1, ratio)));
+                }, { passive: true });
+            }
+        })();
+    } else {
+        console.error('Your browser does not support WebSocket for Live-Reloading.');
+    }
+    // ]]>
+</script>
+
+
+ <button style="position: absolute; left: 665px; top: 350px; display: none;">Start</button></body></html>
